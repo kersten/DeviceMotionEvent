@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>DeviceMotionEvent Demo</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            padding: 0;
+            widht: 100%;
+            height: 100%;
+        }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+
+    <script type="text/javascript" src="http://mrdoob.github.com/three.js/build/Three.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/rdad/PP.js/master/build/PPDebug.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/sole/tween.js/master/build/Tween.js"></script>
+
+    <script type="text/javascript" src="/helvetiker_font/helvetiker_regular.typeface.js"></script>
+    <script type="text/javascript" src="/helvetiker_font/helvetiker_bold.typeface.js"></script>
+
+    <script type="text/javascript">
+        var socket = io.connect(location.origin, {'connect timeout': 5000, 'max reconnection attempts': 500});
+
+        $(document).ready(function () {
+            var camera, scene, renderer,
+                    geometry, material, mesh,
+                    ax = 0, ay = 0, _ax = 0, _ay = 0;
+
+            init();
+            animate();
+
+            function init() {
+                scene = new THREE.Scene();
+
+                camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2,  window.innerHeight / 2, window.innerHeight / - 2, -10000, 10000 );
+                camera.position.z = 100;
+                scene.add( camera );
+
+                // Background Image
+                var backgroundMaterial = new THREE.MeshBasicMaterial({
+                    map: THREE.ImageUtils.loadTexture("running_background.jpg")
+                });
+                backgroundMaterial.map.needsUpdate = true; //ADDED
+
+                var backgroundPlane = new THREE.Mesh(new THREE.PlaneGeometry(1920, 1080), backgroundMaterial);
+                backgroundPlane.overdraw = true;
+
+                scene.add(backgroundPlane);
+
+                // Zeppelin Image
+                var zepMaterial = new THREE.MeshBasicMaterial({
+                    map: THREE.ImageUtils.loadTexture("zeppelin.png")
+                });
+                zepMaterial.map.needsUpdate = true; //ADDED
+                zepMaterial.transparent = true;
+
+                var zepPlane = new THREE.Mesh(new THREE.PlaneGeometry(300, 228), zepMaterial);
+                zepPlane.overdraw = true;
+
+                zepPlane.position.x = (window.innerWidth / 2) - 180;
+                zepPlane.position.y = (window.innerHeight / 2) - 100;
+                zepPlane.rotation.z = -0.05;
+
+                backgroundPlane.add(zepPlane);
+
+                var position = { x : (window.innerWidth / 2) + 190, y: (window.innerHeight / 2) - 100};
+                var target = { x : ((window.innerWidth / 2) * -1) - 300, y: (window.innerHeight / 2) - 100 };
+                var tween = new TWEEN.Tween(position).to(target, 30000);
+
+                tween.onUpdate(function(){
+                    zepPlane.position.x = position.x;
+                    zepPlane.position.y = position.y;
+                });
+
+                tween.onComplete(function () {
+                    console.log('COMPLETE');
+                    position = { x : (window.innerWidth / 2) + 190, y: (window.innerHeight / 2) - 100};
+                    tween.start();
+                });
+
+                tween.start();
+
+                window.ondevicemotion = function(event) {
+                    ax = Math.round(event.accelerationIncludingGravity.x);
+                    ay = Math.round(event.accelerationIncludingGravity.y);
+
+                    backgroundPlane.position.y = ax;
+                    backgroundPlane.position.x = ay;
+
+                    var position = { x : 0, y: 300 };
+                    var target = { x : 400, y: 50 };
+                    var tween = new TWEEN.Tween(position).to(target, 2000);
+
+                    tween.onUpdate(function(){
+                        zepPlane.position.x = position.x;
+                        zepPlane.position.y = position.y;
+                    });
+
+                    zepPlane.position.y = 200 + (ax * -1);
+                    zepPlane.position.x = 500 + (ay * -1);
+
+                    //mesh.position.x += (event.accelerationIncludingGravity.x * 2);
+                    //mesh.position.y += (event.accelerationIncludingGravity.y * 2);
+                    //socket.emit('deviceMotion', {x: ax, y: ay});
+                    if (_ax != ax || _ay != ay) {
+                        //socket.emit('deviceMotion', {x: ax, y: ay});
+                    }
+
+                    _ax = ax;
+                    _ay = ay;
+
+                    /*
+                     ax = Math.abs(event.acceleration.x * 1000);
+                     ay = Math.abs(event.acceleration.y * 1000);
+                     az = Math.abs(event.acceleration.z * 1000);
+                     */
+                }
+
+                //if (window.WebGLRenderingContext) {
+                //    renderer = new THREE.WebGLRenderer();
+                //} else {
+                //    renderer = new THREE.CanvasRenderer();
+                //}
+
+                renderer = new THREE.CanvasRenderer({antialias: true});
+
+                renderer.setClearColorHex(0xFFFFFF, 1.0);
+                renderer.clear();
+
+                renderer.setSize( window.innerWidth, window.innerHeight );
+
+                /*PP.init({
+                    renderer: renderer,
+                    scene: scene,
+                    camera: camera,
+                    guiEnabled: false
+                });*/
+
+                /*PP.addTexture('tDiffuse')
+                        .addTexture('tDepth')
+                        .loadShader('blurTriangleX', {radius: 25.0})
+                        .loadShader('blurTriangleY', {radius: 25.0})
+                        .loadShader('unsharpMasking', {bias: -6.0});*/
+
+                $('body').append(renderer.domElement);
+            }
+
+            function animate() {
+                // note: three.js includes requestAnimationFrame shim
+                requestAnimationFrame( animate );
+                render();
+            }
+
+            function render() {
+                //mesh.rotation.x += 0.01;
+                //mesh.rotation.y += 0.02;
+
+                TWEEN.update();
+                renderer.render( scene, camera );
+            }
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

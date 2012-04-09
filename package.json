@@ -1,0 +1,30 @@
+{
+    "name": "DeviceMotionDemo",
+    "description": "",
+    "version": "0.0.1-pre",
+    "preferGlobal" : true,
+    "config": {
+        "publishtest" : false
+    },
+    "homepage": "http://github.com/kersten/DeviceMotionEvent/",
+    "author": "Kersten Burkhardt <kerstenk@gmail.com>",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/kersten/DeviceMotionEvent/"
+    },
+    "bugs":
+    {
+        "url": "https://github.com/kersten/DeviceMotionEvent/issues"
+    },
+    "dependencies":
+    {
+        "express": "*",
+        "ejs": "*",
+        "socket.io": "*"
+    },
+    "licenses":[{
+        "type" : "MIT",
+        "url" : "https://raw.github.com/kersten/DeviceMotionEvent/master/LICENSE"
+    }]
+}
